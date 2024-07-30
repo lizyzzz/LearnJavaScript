@@ -202,6 +202,163 @@ for (let x of m) { // 遍历Map
     console.log(x[0] + '=' + x[1]);
 }
 ```
+### 2. 函数
+函数与Go类似，但是有 arguments 关键字.
+```
+function abs(x) {
+    if (x >= 0) {
+        return x;
+    } else {
+        return -x;
+    }
+}
 
+let abs = function (x) {
+    if (x >= 0) {
+        return x;
+    } else {
+        return -x;
+    }
+};
+
+// 如果没有return语句，函数执行完毕后也会返回结果，只是结果为undefined
+
+// arguments 关键字
+// JavaScript还有一个免费赠送的关键字arguments，它只在函数内部起作用，并且永远指向当前函数的调用者传入的所有参数。arguments类似Array但它不是一个Array
+function foo(x) {
+    console.log('x = ' + x); // 10
+    for (let i=0; i<arguments.length; i++) {
+        console.log('arg ' + i + ' = ' + arguments[i]); // 10, 20, 30
+    }
+}
+foo(10, 20, 30);
+
+// 可变参数, 与 cpp 类似
+function foo(a, b, ...rest) {
+    console.log('a = ' + a);
+    console.log('b = ' + b);
+    console.log(rest);
+}
+```
+#### 2.1 变量作用域
+JavaScript的函数在查找变量时从自身函数定义开始，从“内”向“外”查找。如果内部函数定义了与外部函数重名的变量，则内部函数的变量将“屏蔽”外部函数的变量。  
+* **注意事项**: JavaScript的函数定义有个特点，它会先扫描整个函数体的语句，把所有用var申明的变量“提升”到函数顶部
+```js
+function foo() {
+    var x = 'Hello, ' + y;
+    console.log(x);
+    var y = 'Bob';
+}
+// 虽然是strict模式，但语句var x = 'Hello, ' + y;并不报错，原因是变量y在稍后申明了。但是console.log显示Hello, undefined，说明变量y的值为undefined。
+// 这正是因为JavaScript引擎自动提升了变量y的声明，但不会提升变量y的赋值。
+foo();
+```
+* 全局作用域：不在任何函数内定义的变量就具有全局作用域。实际上，JavaScript默认有一个全局对象window，全局作用域的变量或函数实际上被绑定到window的一个属性：
+```
+var course = 'Learn JavaScript';
+console.log(course); // 'Learn JavaScript'
+console.log(window.course); // 'Learn JavaScript'
+
+function foo() {
+    alert('foo');
+}
+foo(); // 直接调用foo()
+window.foo(); // 通过window.foo()调用
+```
+* 名字空间：把自己的代码全部放入唯一的名字空间中，会大大减少全局变量冲突的可能
+```js
+// 唯一的全局变量MYAPP:
+let MYAPP = {};
+
+// 其他变量:
+MYAPP.name = 'myapp';
+MYAPP.version = 1.0;
+
+// 其他函数:
+MYAPP.foo = function () {
+    return 'foo';
+};
+```
+* 局部作用域：用let替代var可以申明一个块级作用域的变量
+```js
+function foo() {
+    for (var i=0; i<100; i++) {
+        //
+    }
+    i += 100; // 仍然可以引用变量i
+}
+function foo() {
+    let sum = 0;
+    for (let i=0; i<100; i++) {
+        sum += i;
+    }
+    // SyntaxError:
+    i += 1;
+}
+```
+* 常量：使用 `const` 声明。
+* 解构赋值：可以同时对一组变量进行赋值。
+```js
+let [x, y, z] = ['hello', 'JavaScript', 'ES6'];
+
+// 如果需要从一个对象中取出若干属性，也可以使用解构赋值
+let person = {
+    name: '小明',
+    age: 20,
+    gender: 'male',
+    passport: 'G-12345678',
+    school: 'No.4 middle school'
+};
+let {name, age, passport} = person;
+
+// 对一个对象进行解构赋值时，同样可以直接对嵌套的对象属性进行赋值，只要保证对应的层次是一致的
+let person = {
+    name: '小明',
+    age: 20,
+    gender: 'male',
+    passport: 'G-12345678',
+    school: 'No.4 middle school',
+    address: {
+        city: 'Beijing',
+        street: 'No.1 Road',
+        zipcode: '100001'
+    }
+};
+let {name, address: {city, zip}} = person;
+name; // '小明'
+city; // 'Beijing'
+zip; // undefined, 因为属性名是zipcode而不是zip
+// 注意: address不是变量，而是为了让city和zip获得嵌套的address对象的属性:
+address; // Uncaught ReferenceError: address is not defined
+```
+#### 2.2 方法
+绑定到对象上的函数称为方法，和普通函数也没啥区别，但是它在内部使用了一个`this`关键字，
+```
+let xiaoming = {
+    name: '小明',
+    birth: 1990,
+    age: function () {
+        let y = new Date().getFullYear();
+        return y - this.birth;
+    }
+};
+
+xiaoming.age; // function xiaoming.age()
+xiaoming.age(); // 今年调用是25,明年调用就变成26了
+
+// 注意方法内的内部函数，需要捕获 this
+let xiaoming = {
+    name: '小明',
+    birth: 1990,
+    age: function () {
+        let that = this; // 在方法内部一开始就捕获this
+        function getAgeFromBirth() {
+            let y = new Date().getFullYear();
+            return y - that.birth; // 用that而不是this
+        }
+        return getAgeFromBirth();
+    }
+};
+```
 
 
